@@ -322,14 +322,32 @@ $('f').year.addEventListener('input', e => {
   $('ywarn').textContent = +e.target.value > 2020 ? 'Vozy vyrobené po roce 2020 zatím nepodporujeme.' : '';
 });
 
-    console.error('FormSubmit:', err);
-    const body = Object.entries(data).filter(([k]) => k[0] !== '_').map(([k, x]) => k + ': ' + x).join('\n');
-    $('status').textContent = 'Odeslání se nepodařilo (' + err.message + '). ';
-    const a = document.createElement('a');
-    a.href = 'mailto:' + FORM_EMAIL + '?subject=' + encodeURIComponent(data._subject) + '&body=' + encodeURIComponent(body);
-    a.textContent = 'Napište nám e-mail.';
-    $('status').append(a);
-
+   // formulář: odešle e-mail na pozadí přes FormSubmit (první odeslání vyžaduje aktivaci e-mailem)
+const FORM_EMAIL = 'machactomas@proton.me';
+$('f').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target, btn = f.querySelector('button[type=submit]'), d = new FormData(f), v = k => d.get(k) || '-';
+  const data = {
+    'Jméno': v('name'), email: v('email'), 'Telefon': v('phone'), 'Vozidlo': v('car'),
+    'Slevový kód': v('promoCode'), 'Díly': v('panels'), 'Zpráva': v('msg'),
+    _subject: 'Poptávka služeb: ' + v('car'), _template: 'table', _captcha: 'false', _honey: d.get('_honey')
+  };
+  btn.disabled = true;
+  $('status').textContent = 'Odesílám…';
+  try {
+    const r = await fetch('https://formsubmit.co/ajax/' + FORM_EMAIL, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(data)
+    });
+    const j = await r.json();
+    if (!r.ok || String(j.success) === 'false') throw new Error(j.message || r.status);
+    f.reset();
+    $('status').textContent = 'Děkujeme, poptávka byla odeslána. Ozveme se vám co nejdříve.';
+  } catch (err) {
+    $('status').textContent = 'Odeslání se nepodařilo. Napište nám prosím přímo na ' + FORM_EMAIL + '.';
+  }
+  btn.disabled = false;
+});
+  
 /* ===== LOGO: nahraje logo do horní lišty a do záložky prohlížeče ===== */
 const LOGO = {
   file: 'logo.png',   // název souboru s logem (nahraj ho na GitHub vedle index.html)
