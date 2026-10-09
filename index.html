@@ -322,18 +322,13 @@ $('f').year.addEventListener('input', e => {
   $('ywarn').textContent = +e.target.value > 2020 ? 'Vozy vyrobené po roce 2020 zatím nepodporujeme.' : '';
 });
 
-// form: opens the visitor's email app with the message filled in
-$('f').addEventListener('submit', e => {
-  e.preventDefault();
-  const d = new FormData(e.target), v = k => d.get(k) || '-';
-  const body = `Jméno: ${v('name')}\nE-mail: ${v('email')}\nTelefon: ${v('phone')}\nVozidlo: ${v('car')}\nRok výroby: ${v('year')}\n\nÚpravy:\n${v('opts')}\n\nCena za vybrané úpravy: ${fmt(calcPrice(sel.size))} Kč\n\nZpráva:\n${v('msg')}`;
-  const a = document.createElement('a');
-  a.href = `mailto:machactomas@proton.me?subject=${encodeURIComponent('Poptávka kódování: ' + v('car'))}&body=${encodeURIComponent(body)}`;
-  a.click();
-  $('status').textContent = 'Otevře se váš e-mailový program s připravenou zprávou. Pokud ne, napište na machactomas@proton.me.';
-});
-$('yr').textContent = new Date().getFullYear();
-render();
+    console.error('FormSubmit:', err);
+    const body = Object.entries(data).filter(([k]) => k[0] !== '_').map(([k, x]) => k + ': ' + x).join('\n');
+    $('status').textContent = 'Odeslání se nepodařilo (' + err.message + '). ';
+    const a = document.createElement('a');
+    a.href = 'mailto:' + FORM_EMAIL + '?subject=' + encodeURIComponent(data._subject) + '&body=' + encodeURIComponent(body);
+    a.textContent = 'Napište nám e-mail.';
+    $('status').append(a);
 
 /* ===== LOGO: nahraje logo do horní lišty a do záložky prohlížeče ===== */
 const LOGO = {
